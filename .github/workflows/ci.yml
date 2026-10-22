@@ -25,14 +25,29 @@ jobs:
         uses: actions/setup-java@v4
         with:
           java-version: '21'
-          distribution: 'temurin'
-
-      - name: Install NDK
-        run: |
-          yes | ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager "ndk;29.0.13846066"
+          # Match gradle/gradle-daemon-jvm.properties so Gradle uses this protected JDK.
+          distribution: 'jetbrains'
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
+
+      - name: Block compromised Java certificates
+        uses: Expensify/GitHub-Actions/block-compromised-java-certificates@d8dfc3ddd4d8626206653c6168ca8d094547749a
+
+      - name: Restrict Gradle to the protected JDK
+        run: |
+          # Prevent cached or downloaded toolchains from bypassing the certificate blocklist.
+          mkdir -p "$HOME/.gradle"
+          cat >> "$HOME/.gradle/gradle.properties" <<EOF
+          org.gradle.java.installations.auto-detect=false
+          org.gradle.java.installations.auto-download=false
+          org.gradle.java.installations.fromEnv=JAVA_HOME
+          org.gradle.java.installations.paths=$JAVA_HOME
+          EOF
+
+      - name: Install NDK
+        run: |
+          yes | "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" "ndk;29.0.13846066"
 
       # Run checks (tests, lint) on every trigger
       - name: Build Artifacts
