@@ -17,22 +17,31 @@ jobs:
       packages: write # Needed to publish to GitHub Packages
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0 # Critical for git-sensitive-semantic-versioning
 
       - name: Set up JDK 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+        env:
+          # The JetBrains resolver reads this environment variable for GitHub release requests.
+          GITHUB_TOKEN: ${{ github.token }}
         with:
           java-version: '21'
-          distribution: 'temurin'
+          # Match gradle/gradle-daemon-jvm.properties so Gradle uses this protected JDK.
+          distribution: 'jetbrains'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3
+
+      - name: Block compromised Java certificates
+        uses: Expensify/GitHub-Actions/block-compromised-java-certificates@b70c378d6cfae84f6844379eef3568cb33ea9680
+        with:
+          restrict-gradle: 'true'
 
       - name: Install NDK
         run: |
-          yes | ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager "ndk;29.0.13846066"
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+          yes | "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" "ndk;29.0.13846066"
 
       # Run checks (tests, lint) on every trigger
       - name: Build Artifacts
@@ -41,7 +50,7 @@ jobs:
 
       - name: Upload Release Assets
         if: github.event_name == 'release'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
           fail_on_unmatched_files: true
           files: |
