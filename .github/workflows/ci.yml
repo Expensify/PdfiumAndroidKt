@@ -11,7 +11,7 @@ on:
 jobs:
   build_and_test:
     name: Build & Test
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-2vcpu-ubuntu-2404
     permissions:
       contents: write # Needed to upload release assets
       packages: write # Needed to publish to GitHub Packages
